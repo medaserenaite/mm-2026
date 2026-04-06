@@ -250,7 +250,8 @@ function BingoTab() {
 function VotesTab() {
   const [votes, setVotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(null); // which detective guess is expanded
+  const [expanded, setExpanded] = useState(null);
+  const [showResetVotes, setShowResetVotes] = useState(false);
 
   async function fetchVotes() {
     const { data } = await supabase
@@ -259,6 +260,11 @@ function VotesTab() {
       .order('submitted_at', { ascending: true });
     setVotes(data ?? []);
     setLoading(false);
+  }
+
+  async function handleResetVotes() {
+    await supabase.from('votes').delete().neq('voter_name', '');
+    setShowResetVotes(false);
   }
 
   useEffect(() => {
@@ -341,6 +347,34 @@ function VotesTab() {
               )}
             </div>
           ))
+        )}
+      </div>
+
+      {/* Reset votes */}
+      <div className="card p-4 flex flex-col gap-3" style={{ borderColor: 'rgba(220,38,38,0.2)' }}>
+        <p className="text-amber-200/35 text-[10px] uppercase tracking-widest text-center font-bold">⚠️ Danger Zone</p>
+        {!showResetVotes ? (
+          <button onClick={() => setShowResetVotes(true)}
+            className="w-full rounded-xl px-4 py-3 text-sm font-bold border border-red-900/30
+              text-red-500/60 hover:text-red-400/80 hover:border-red-700/40 hover:bg-red-900/10 transition-all">
+            Clear All Votes
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-red-400/70 text-xs italic text-center">
+              "This deletes ALL votes from the database. No going back, Captain."
+            </p>
+            <div className="flex gap-2">
+              <button onClick={handleResetVotes}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border border-red-700/50 text-red-400/80 bg-red-900/15 hover:bg-red-900/25 transition-all">
+                Aye, Clear!
+              </button>
+              <button onClick={() => setShowResetVotes(false)}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border border-amber-900/30 text-amber-900/50 hover:text-amber-700/60 transition-all">
+                Nay, Abort
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
