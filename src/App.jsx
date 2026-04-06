@@ -1,0 +1,55 @@
+import { useState } from 'react';
+import { CHARACTERS } from './data/characters.js';
+import LoginPage from './pages/LoginPage.jsx';
+import HubPage from './pages/HubPage.jsx';
+import BingoPage from './pages/BingoPage.jsx';
+import VotingPage from './pages/VotingPage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
+import LeaderboardPage from './pages/LeaderboardPage.jsx';
+
+export default function App() {
+  const [character, setCharacter] = useState(() => sessionStorage.getItem('mm_character'));
+  const [page, setPage] = useState('hub');
+
+  const characterData = CHARACTERS.find(c => c.name === character);
+  const isAdmin = characterData?.isAdmin === true;
+
+  function handleLogin(name) {
+    setCharacter(name);
+    setPage('hub');
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('mm_character');
+    setCharacter(null);
+    setPage('hub');
+  }
+
+  if (!character) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (isAdmin) {
+    return <AdminPage onLogout={handleLogout} />;
+  }
+
+  if (page === 'bingo') {
+    return (
+      <BingoPage
+        character={character}
+        onBack={() => setPage('hub')}
+        onComplete={() => setPage('leaderboard')}
+      />
+    );
+  }
+
+  if (page === 'leaderboard') {
+    return <LeaderboardPage character={character} onBack={() => setPage('hub')} />;
+  }
+
+  if (page === 'voting') {
+    return <VotingPage character={character} onBack={() => setPage('hub')} />;
+  }
+
+  return <HubPage character={character} onNavigate={setPage} onLogout={handleLogout} />;
+}
