@@ -20,16 +20,76 @@ function formatTime(iso) {
   });
 }
 
-export default function AdminPage({ onLogout }) {
+// ─── Vote tally helper ────────────────────────────────────────────────────────
+
+function tally(votes, field) {
+  const counts = {};
+  votes.forEach(v => {
+    const val = v[field];
+    if (val) counts[val] = (counts[val] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count }));
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function TallySection({ title, pirateTitle, emoji, rows, total }) {
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col gap-1">
+        <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
+        <p className="text-amber-900/40 text-xs italic pl-1">No votes yet</p>
+      </div>
+    );
+  }
+  const max = rows[0].count;
+  return (
+    <div className="flex flex-col gap-2">
+      <div>
+        <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
+        <p className="text-amber-900/40 text-[10px] italic">{pirateTitle}</p>
+      </div>
+      {rows.map(({ name, count }, idx) => (
+        <div key={name} className="flex items-center gap-2">
+          <span className="text-base w-6 text-center flex-shrink-0">
+            {idx < 3 ? RANK[idx] : <span className="text-amber-900/30 text-xs font-mono">#{idx+1}</span>}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-amber-200/80 text-xs font-semibold truncate">{name}</p>
+              <p className="text-amber-900/50 text-[10px] font-mono ml-2 flex-shrink-0">
+                {count}/{total}
+              </p>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(180,130,40,0.12)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${(count / max) * 100}%`,
+                  background: idx === 0
+                    ? 'linear-gradient(90deg, #d97706, #f59e0b)'
+                    : 'rgba(180,130,40,0.4)',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Bingo Tab ────────────────────────────────────────────────────────────────
+
+function BingoTab() {
   const [completions, setCompletions] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Add winner form
   const [addName, setAddName] = useState('');
   const [addTs, setAddTs] = useState('');
   const [addError, setAddError] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
-
   const [showReset, setShowReset] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -45,10 +105,8 @@ export default function AdminPage({ onLogout }) {
   useEffect(() => {
     fetchCompletions();
     const channel = supabase
-      .channel('admin_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_completions' }, () => {
-        fetchCompletions();
-      })
+      .channel('admin_bingo_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_completions' }, () => fetchCompletions())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -58,12 +116,8 @@ export default function AdminPage({ onLogout }) {
     if (!addName) return;
     setAddLoading(true);
     setAddError(null);
-
     const ts = addTs ? new Date(addTs).toISOString() : new Date().toISOString();
-    const { error } = await supabase
-      .from('bingo_completions')
-      .insert({ character_name: addName, completed_at: ts });
-
+    const { error } = await supabase.from('bingo_completions').insert({ character_name: addName, completed_at: ts });
     if (error) {
       setAddError(error.code === '23505'
         ? 'That scallywag already claimed victory!'
@@ -82,14 +136,221 @@ export default function AdminPage({ onLogout }) {
 
   async function handleResetAll() {
     await supabase.from('bingo_completions').delete().neq('character_name', '');
-    // Also clear all bingo card state from players' localStorage on admin device
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('bingo_'))
-      .forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('bingo_')).forEach(k => localStorage.removeItem(k));
     setShowReset(false);
   }
 
   const alreadyEntered = new Set(completions.map(c => c.character_name));
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      {/* Hall of Fame */}
+      <div className="card p-5 flex flex-col gap-2">
+        <p className="text-amber-200/40 text-[10px] uppercase tracking-widest text-center font-bold mb-1">
+          🏆 Hall of Fame
+        </p>
+        {loading ? (
+          <div className="flex justify-center py-6"><div className="text-2xl animate-spin">⚓</div></div>
+        ) : completions.length === 0 ? (
+          <p className="text-amber-900/40 text-xs italic text-center py-4">No victors yet.</p>
+        ) : (
+          completions.map((entry, idx) => (
+            <div key={entry.character_name}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+              style={{
+                background: idx < 3 ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.02)',
+                border: idx < 3 ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(180,130,40,0.08)',
+              }}>
+              <span className="text-xl w-7 text-center flex-shrink-0">
+                {idx < 3 ? RANK[idx] : <span className="text-amber-900/40 text-sm font-mono">#{idx+1}</span>}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-amber-200/85 font-bold text-sm truncate">{entry.character_name}</p>
+                {idx < 3 && <p className="text-amber-900/45 text-[10px] italic">{rankLabel(idx)}</p>}
+              </div>
+              <p className="text-amber-900/45 text-[10px] font-mono flex-shrink-0">{formatTime(entry.completed_at)}</p>
+              {deleteTarget === entry.character_name ? (
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={() => handleDelete(entry.character_name)}
+                    className="text-[10px] px-2 py-1 rounded bg-red-900/30 text-red-400/80 hover:bg-red-900/50 transition-all">
+                    Confirm
+                  </button>
+                  <button onClick={() => setDeleteTarget(null)}
+                    className="text-[10px] px-2 py-1 rounded border border-amber-900/20 text-amber-900/40 hover:text-amber-700/60 transition-all">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setDeleteTarget(entry.character_name)}
+                  className="text-amber-900/25 hover:text-red-500/60 transition-colors text-sm flex-shrink-0 px-1"
+                  title="Remove entry">✕</button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Add winner */}
+      <div className="card p-5 flex flex-col gap-3">
+        <p className="text-amber-200/40 text-[10px] uppercase tracking-widest text-center font-bold">
+          ✍️ Record a Winner Manually
+        </p>
+        <form onSubmit={handleAddWinner} className="flex flex-col gap-3">
+          <select value={addName} onChange={e => { setAddName(e.target.value); setAddError(null); }} required
+            className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
+              text-amber-100 text-sm focus:outline-none focus:border-amber-600/50 focus:ring-2 focus:ring-amber-700/20 transition-all">
+            <option value="" disabled className="bg-zinc-900">— Select character —</option>
+            {playerNames.filter(n => !alreadyEntered.has(n)).map(n => (
+              <option key={n} value={n} className="bg-zinc-900">{n}</option>
+            ))}
+          </select>
+          <input type="datetime-local" value={addTs} onChange={e => setAddTs(e.target.value)}
+            className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
+              text-amber-100 text-sm focus:outline-none focus:border-amber-600/50 focus:ring-2 focus:ring-amber-700/20 transition-all" />
+          {addError && <p className="text-red-400/70 text-xs italic text-center">{addError}</p>}
+          <button type="submit" disabled={!addName || addLoading} className="btn-primary w-full py-3 text-sm">
+            {addLoading ? 'Recording…' : 'Record Victory ⚓'}
+          </button>
+        </form>
+      </div>
+
+      {/* Reset */}
+      <div className="card p-4 flex flex-col gap-3" style={{ borderColor: 'rgba(220,38,38,0.2)' }}>
+        <p className="text-amber-200/35 text-[10px] uppercase tracking-widest text-center font-bold">⚠️ Danger Zone</p>
+        {!showReset ? (
+          <button onClick={() => setShowReset(true)}
+            className="w-full rounded-xl px-4 py-3 text-sm font-bold border border-red-900/30
+              text-red-500/60 hover:text-red-400/80 hover:border-red-700/40 hover:bg-red-900/10 transition-all">
+            Reset All Bingo Data
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-red-400/70 text-xs italic text-center">
+              "This deletes ALL bingo completions. No going back, Captain."
+            </p>
+            <div className="flex gap-2">
+              <button onClick={handleResetAll}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border border-red-700/50 text-red-400/80 bg-red-900/15 hover:bg-red-900/25 transition-all">
+                Aye, Reset!
+              </button>
+              <button onClick={() => setShowReset(false)}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border border-amber-900/30 text-amber-900/50 hover:text-amber-700/60 transition-all">
+                Nay, Abort
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Votes Tab ────────────────────────────────────────────────────────────────
+
+function VotesTab() {
+  const [votes, setVotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null); // which detective guess is expanded
+
+  async function fetchVotes() {
+    const { data } = await supabase
+      .from('votes')
+      .select('*')
+      .order('submitted_at', { ascending: true });
+    setVotes(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchVotes();
+    const channel = supabase
+      .channel('admin_votes_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => fetchVotes())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const total = votes.length;
+  const costumeTally   = tally(votes, 'best_costume');
+  const performerTally = tally(votes, 'best_performer');
+  const mostLikelyTally = tally(votes, 'most_likely');
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+
+      {/* Vote count */}
+      <div className="card p-4 text-center">
+        {loading ? (
+          <div className="text-2xl animate-spin">⚓</div>
+        ) : (
+          <>
+            <p className="text-amber-300 font-black text-3xl">{total}</p>
+            <p className="text-amber-900/50 text-xs uppercase tracking-widest mt-1">
+              {total === 1 ? 'Pirate has voted' : 'Pirates have voted'}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Tallies */}
+      {!loading && total > 0 && (
+        <div className="card p-5 flex flex-col gap-6">
+          <TallySection title="Best Costume"   pirateTitle="Finest Plumage"                  emoji="🦜" rows={costumeTally}    total={total} />
+          <div className="border-t border-amber-900/15" />
+          <TallySection title="Best Performer" pirateTitle="Best Actor Among Scallywags"     emoji="🎭" rows={performerTally}  total={total} />
+          <div className="border-t border-amber-900/15" />
+          <TallySection title="Most Likely to Commit a Crime" pirateTitle="Most Likely to Walk the Plank" emoji="☠️" rows={mostLikelyTally} total={total} />
+        </div>
+      )}
+
+      {/* Best Detective — show all villain guesses */}
+      <div className="card p-5 flex flex-col gap-3">
+        <div>
+          <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">🔍 Best Detective</p>
+          <p className="text-amber-900/40 text-[10px] italic">All villain &amp; motive guesses — sorted by submission time</p>
+        </div>
+
+        {loading ? (
+          <p className="text-amber-900/40 text-xs italic text-center py-2">Loading…</p>
+        ) : votes.length === 0 ? (
+          <p className="text-amber-900/40 text-xs italic pl-1">No guesses yet</p>
+        ) : (
+          votes.map((v, idx) => (
+            <div key={v.voter_name}
+              className="rounded-xl border border-amber-900/15 overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <button
+                onClick={() => setExpanded(expanded === idx ? null : idx)}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-amber-900/40 text-[10px] font-mono flex-shrink-0">#{idx + 1}</span>
+                  <p className="text-amber-200/75 text-sm font-semibold truncate">{v.voter_name}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <p className="text-amber-900/40 text-[10px] font-mono">{formatTime(v.submitted_at)}</p>
+                  <span className="text-amber-900/40 text-xs">{expanded === idx ? '▲' : '▼'}</span>
+                </div>
+              </button>
+              {expanded === idx && (
+                <div className="px-3 pb-3 border-t border-amber-900/10">
+                  <p className="text-amber-200/60 text-sm font-semibold mt-2">
+                    {v.villain_guess}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main AdminPage ───────────────────────────────────────────────────────────
+
+export default function AdminPage({ onLogout }) {
+  const [tab, setTab] = useState('bingo');
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
@@ -103,8 +364,9 @@ export default function AdminPage({ onLogout }) {
           style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%)' }} />
       </div>
 
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-6">
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-5 animate-fade-in pt-6">
 
+        {/* Header */}
         <div className="flex items-center gap-3 text-3xl">
           <span className="animate-flicker">🕯️</span>
           <span className="text-4xl">⚙️</span>
@@ -114,167 +376,35 @@ export default function AdminPage({ onLogout }) {
         <div className="text-center">
           <h1 className="text-3xl font-black text-gradient">Captain's Deck</h1>
           <div className="divider-rune mt-2 text-sm">⚓</div>
-          <p className="text-amber-200/35 text-xs italic mt-2">Admin access — live leaderboard.</p>
         </div>
 
-        {/* Live leaderboard */}
-        <div className="card p-5 w-full flex flex-col gap-2">
-          <p className="text-amber-200/40 text-[10px] uppercase tracking-widest text-center font-bold mb-1">
-            🏆 Hall of Fame
-          </p>
-
-          {loading ? (
-            <div className="flex justify-center py-6">
-              <div className="text-2xl animate-spin">⚓</div>
-            </div>
-          ) : completions.length === 0 ? (
-            <p className="text-amber-900/40 text-xs italic text-center py-4">
-              No victors yet. The seas are calm, Captain.
-            </p>
-          ) : (
-            completions.map((entry, idx) => (
-              <div key={entry.character_name}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                style={{
-                  background: idx < 3 ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.02)',
-                  border: idx < 3 ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(180,130,40,0.08)',
-                }}>
-                <span className="text-xl w-7 text-center flex-shrink-0">
-                  {idx < 3 ? RANK[idx] : <span className="text-amber-900/40 text-sm font-mono">#{idx+1}</span>}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-amber-200/85 font-bold text-sm truncate">{entry.character_name}</p>
-                  {idx < 3 && (
-                    <p className="text-amber-900/45 text-[10px] italic">{rankLabel(idx)}</p>
-                  )}
-                </div>
-                <p className="text-amber-900/45 text-[10px] font-mono flex-shrink-0">{formatTime(entry.completed_at)}</p>
-
-                {/* Delete */}
-                {deleteTarget === entry.character_name ? (
-                  <div className="flex gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => handleDelete(entry.character_name)}
-                      className="text-[10px] px-2 py-1 rounded bg-red-900/30 text-red-400/80 hover:bg-red-900/50 transition-all"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(null)}
-                      className="text-[10px] px-2 py-1 rounded border border-amber-900/20 text-amber-900/40 hover:text-amber-700/60 transition-all"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setDeleteTarget(entry.character_name)}
-                    className="text-amber-900/25 hover:text-red-500/60 transition-colors text-sm flex-shrink-0 px-1"
-                    title="Remove entry"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Add winner manually */}
-        <div className="card p-5 w-full flex flex-col gap-4">
-          <p className="text-amber-200/40 text-[10px] uppercase tracking-widest text-center font-bold">
-            ✍️ Record a Winner Manually
-          </p>
-
-          <form onSubmit={handleAddWinner} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-amber-900/50 text-[10px] uppercase tracking-widest">Character</label>
-              <select
-                value={addName}
-                onChange={e => { setAddName(e.target.value); setAddError(null); }}
-                required
-                className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
-                  text-amber-100 text-sm focus:outline-none focus:border-amber-600/50
-                  focus:ring-2 focus:ring-amber-700/20 transition-all"
-              >
-                <option value="" disabled className="bg-zinc-900">— Select character —</option>
-                {playerNames.filter(n => !alreadyEntered.has(n)).map(n => (
-                  <option key={n} value={n} className="bg-zinc-900">{n}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-amber-900/50 text-[10px] uppercase tracking-widest">
-                Timestamp <span className="text-amber-900/30">(optional)</span>
-              </label>
-              <input
-                type="datetime-local"
-                value={addTs}
-                onChange={e => setAddTs(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
-                  text-amber-100 text-sm focus:outline-none focus:border-amber-600/50
-                  focus:ring-2 focus:ring-amber-700/20 transition-all"
-              />
-            </div>
-
-            {addError && (
-              <p className="text-red-400/70 text-xs italic text-center">{addError}</p>
-            )}
-
+        {/* Tab switcher */}
+        <div className="flex w-full rounded-xl overflow-hidden border border-amber-900/25"
+          style={{ background: 'rgba(0,0,0,0.3)' }}>
+          {[
+            { key: 'bingo', label: '🎲 Bingo' },
+            { key: 'votes', label: '📜 Votes' },
+          ].map(t => (
             <button
-              type="submit"
-              disabled={!addName || addLoading}
-              className="btn-primary w-full py-3 text-sm"
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className="flex-1 py-3 text-sm font-bold transition-all duration-200"
+              style={{
+                background: tab === t.key ? 'rgba(180,83,9,0.35)' : 'transparent',
+                color: tab === t.key ? '#fbbf24' : 'rgba(180,130,40,0.45)',
+                borderRight: t.key === 'bingo' ? '1px solid rgba(180,130,40,0.2)' : 'none',
+              }}
             >
-              {addLoading ? 'Recording…' : 'Record Victory ⚓'}
+              {t.label}
             </button>
-          </form>
+          ))}
         </div>
 
-        {/* Danger zone */}
-        <div className="card p-5 w-full flex flex-col gap-3" style={{ borderColor: 'rgba(220,38,38,0.2)' }}>
-          <p className="text-amber-200/35 text-[10px] uppercase tracking-widest text-center font-bold">
-            ⚠️ Danger Zone
-          </p>
-
-          {!showReset ? (
-            <button
-              onClick={() => setShowReset(true)}
-              className="w-full rounded-xl px-4 py-3 text-sm font-bold transition-all
-                border border-red-900/30 text-red-500/60 hover:text-red-400/80
-                hover:border-red-700/40 hover:bg-red-900/10"
-            >
-              Reset All Bingo Data
-            </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-red-400/70 text-xs italic text-center">
-                "This deletes ALL bingo completions from the database. No going back, Captain."
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleResetAll}
-                  className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border
-                    border-red-700/50 text-red-400/80 bg-red-900/15 hover:bg-red-900/25 transition-all"
-                >
-                  Aye, Reset!
-                </button>
-                <button
-                  onClick={() => setShowReset(false)}
-                  className="flex-1 rounded-xl px-4 py-3 text-sm font-bold border
-                    border-amber-900/30 text-amber-900/50 hover:text-amber-700/60 transition-all"
-                >
-                  Nay, Abort
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        {tab === 'bingo' ? <BingoTab /> : <VotesTab />}
 
         <button
           onClick={onLogout}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic mt-2"
         >
           ← Sign out
         </button>

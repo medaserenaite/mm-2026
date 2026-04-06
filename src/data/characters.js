@@ -58,7 +58,7 @@ export const BINGO_PROMPTS = [
   "Retired pirate captain",
   "Smuggles contraband",
   "Makes sails or flags",
-  "Predicts weather/navigates by stars",
+  "Predicts weather/<br/>navigates by stars",
   "Treasure hunter",
   "Is a bird",
 ];

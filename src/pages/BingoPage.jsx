@@ -380,7 +380,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
                         </div>
                       )}
                       <span className={`
-                        relative z-10 text-[9px] leading-tight font-medium
+                        relative z-10 text-[13px] leading-tight font-medium
                         ${isWinning
                           ? 'text-amber-300'
                           : isMarked
