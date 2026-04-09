@@ -172,7 +172,7 @@ function SuccessModal({ character, timestamp, onViewLeaderboard, onClose }) {
         </button>
         <button
           onClick={onClose}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+          className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic"
         >
           Stay on me card
         </button>
@@ -267,12 +267,9 @@ export default function BingoPage({ character, onBack, onComplete }) {
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-10 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(120,60,10,0.07)' }} />
-        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(100,20,20,0.07)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)' }} />
+        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-lg flex flex-col items-center gap-5 animate-fade-in pt-6">
@@ -387,9 +384,9 @@ export default function BingoPage({ character, onBack, onComplete }) {
                             ? 'text-amber-200/70'
                             : 'text-amber-200/50'
                         }
-                      `}>
-                        {prompt}
-                      </span>
+                      `}
+                        dangerouslySetInnerHTML={{ __html: prompt }}
+                      />
                     </button>
                   );
                 })}
@@ -405,7 +402,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
             {/* Leaderboard link */}
             <button
               onClick={onComplete}
-              className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+              className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic"
             >
               View Leaderboard →
             </button>
@@ -414,7 +411,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
 
         <button
           onClick={onBack}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+          className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic"
         >
           ← Back to the ship
         </button>

@@ -40,7 +40,7 @@ function TallySection({ title, pirateTitle, emoji, rows, total }) {
     return (
       <div className="flex flex-col gap-1">
         <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
-        <p className="text-amber-900/40 text-xs italic pl-1">No votes yet</p>
+        <p className="text-amber-400/60 text-xs italic pl-1">No votes yet</p>
       </div>
     );
   }
@@ -49,7 +49,7 @@ function TallySection({ title, pirateTitle, emoji, rows, total }) {
     <div className="flex flex-col gap-2">
       <div>
         <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
-        <p className="text-amber-900/40 text-[10px] italic">{pirateTitle}</p>
+        <p className="text-amber-400/60 text-[10px] italic">{pirateTitle}</p>
       </div>
       {rows.map(({ name, count }, idx) => (
         <div key={name} className="flex items-center gap-2">
@@ -152,7 +152,7 @@ function BingoTab() {
         {loading ? (
           <div className="flex justify-center py-6"><div className="text-2xl animate-spin">⚓</div></div>
         ) : completions.length === 0 ? (
-          <p className="text-amber-900/40 text-xs italic text-center py-4">No victors yet.</p>
+          <p className="text-amber-400/60 text-xs italic text-center py-4">No victors yet.</p>
         ) : (
           completions.map((entry, idx) => (
             <div key={entry.character_name}
@@ -162,7 +162,7 @@ function BingoTab() {
                 border: idx < 3 ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(180,130,40,0.08)',
               }}>
               <span className="text-xl w-7 text-center flex-shrink-0">
-                {idx < 3 ? RANK[idx] : <span className="text-amber-900/40 text-sm font-mono">#{idx+1}</span>}
+                {idx < 3 ? RANK[idx] : <span className="text-amber-400/60 text-sm font-mono">#{idx+1}</span>}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-amber-200/85 font-bold text-sm truncate">{entry.character_name}</p>
@@ -176,7 +176,7 @@ function BingoTab() {
                     Confirm
                   </button>
                   <button onClick={() => setDeleteTarget(null)}
-                    className="text-[10px] px-2 py-1 rounded border border-amber-900/20 text-amber-900/40 hover:text-amber-700/60 transition-all">
+                    className="text-[10px] px-2 py-1 rounded border border-amber-900/20 text-amber-400/60 hover:text-amber-700/60 transition-all">
                     Cancel
                   </button>
                 </div>
@@ -313,13 +313,13 @@ function VotesTab() {
       <div className="card p-5 flex flex-col gap-3">
         <div>
           <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">🔍 Best Detective</p>
-          <p className="text-amber-900/40 text-[10px] italic">All villain &amp; motive guesses — sorted by submission time</p>
+          <p className="text-amber-400/60 text-[10px] italic">All villain &amp; motive guesses — sorted by submission time</p>
         </div>
 
         {loading ? (
-          <p className="text-amber-900/40 text-xs italic text-center py-2">Loading…</p>
+          <p className="text-amber-400/60 text-xs italic text-center py-2">Loading…</p>
         ) : votes.length === 0 ? (
-          <p className="text-amber-900/40 text-xs italic pl-1">No guesses yet</p>
+          <p className="text-amber-400/60 text-xs italic pl-1">No guesses yet</p>
         ) : (
           votes.map((v, idx) => (
             <div key={v.voter_name}
@@ -330,12 +330,12 @@ function VotesTab() {
                 className="w-full flex items-center justify-between px-3 py-2.5 text-left"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-amber-900/40 text-[10px] font-mono flex-shrink-0">#{idx + 1}</span>
+                  <span className="text-amber-400/60 text-[10px] font-mono flex-shrink-0">#{idx + 1}</span>
                   <p className="text-amber-200/75 text-sm font-semibold truncate">{v.voter_name}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                  <p className="text-amber-900/40 text-[10px] font-mono">{formatTime(v.submitted_at)}</p>
-                  <span className="text-amber-900/40 text-xs">{expanded === idx ? '▲' : '▼'}</span>
+                  <p className="text-amber-400/60 text-[10px] font-mono">{formatTime(v.submitted_at)}</p>
+                  <span className="text-amber-400/60 text-xs">{expanded === idx ? '▲' : '▼'}</span>
                 </div>
               </button>
               {expanded === idx && (
@@ -390,12 +390,9 @@ export default function AdminPage({ onLogout }) {
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(120,60,10,0.07)' }} />
-        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(80,10,10,0.08)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%)' }} />
+        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-5 animate-fade-in pt-6">
@@ -438,7 +435,7 @@ export default function AdminPage({ onLogout }) {
 
         <button
           onClick={onLogout}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic mt-2"
+          className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic mt-2"
         >
           ← Sign out
         </button>

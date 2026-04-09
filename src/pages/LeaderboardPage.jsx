@@ -50,12 +50,9 @@ export default function LeaderboardPage({ character, onBack }) {
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(120,60,10,0.07)' }} />
-        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(100,20,20,0.07)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%)' }} />
+        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-6">
@@ -126,7 +123,7 @@ export default function LeaderboardPage({ character, onBack }) {
                   >
                     {/* Rank badge */}
                     <span className="text-xl w-7 text-center flex-shrink-0">
-                      {idx < 3 ? RANK[idx] : <span className="text-amber-900/40 text-sm font-mono">#{idx+1}</span>}
+                      {idx < 3 ? RANK[idx] : <span className="text-amber-400/60 text-sm font-mono">#{idx+1}</span>}
                     </span>
 
                     {/* Name & label */}
@@ -147,7 +144,7 @@ export default function LeaderboardPage({ character, onBack }) {
                     </div>
 
                     {/* Timestamp */}
-                    <p className={`text-[10px] font-mono flex-shrink-0 ${isMe ? 'text-amber-400/70' : 'text-amber-900/40'}`}>
+                    <p className={`text-[10px] font-mono flex-shrink-0 ${isMe ? 'text-amber-400/70' : 'text-amber-400/60'}`}>
                       {formatTime(entry.completed_at)}
                     </p>
                   </div>
@@ -163,7 +160,7 @@ export default function LeaderboardPage({ character, onBack }) {
 
         <button
           onClick={onBack}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+          className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic"
         >
           ← Back to the ship
         </button>

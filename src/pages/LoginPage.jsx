@@ -50,12 +50,9 @@ export default function LoginPage({ onLogin }) {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Atmospheric background glows */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(120,60,10,0.07)' }} />
-        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'rgba(100,20,20,0.07)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%)' }} />
+        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-7 animate-fade-in">
@@ -69,7 +66,7 @@ export default function LoginPage({ onLogin }) {
 
         {/* Title */}
         <div className="text-center">
-          <h1 className="text-3xl font-black text-gradient leading-tight">
+          <h1 className="text-[60px] font-black text-gradient leading-tight" style={{ fontFamily: 'Pirata One' }}>
             Pop DeKegg's Tavern
           </h1>
           <div className="divider-rune mt-2 text-sm">⚓</div>
@@ -155,7 +152,7 @@ export default function LoginPage({ onLogin }) {
           </button>
         </form>
 
-        <p className="text-amber-900/40 text-xs italic text-center">
+        <p className="text-amber-400/60 text-xs italic text-center">
           Your code is printed on your character card.
         </p>
       </div>

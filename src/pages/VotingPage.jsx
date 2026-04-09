@@ -130,12 +130,9 @@ export default function VotingPage({ character, onBack }) {
   // ── Background wrapper ──
   const bg = (
     <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full blur-3xl"
-        style={{ background: 'rgba(120,60,10,0.07)' }} />
-      <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] rounded-full blur-3xl"
-        style={{ background: 'rgba(100,20,20,0.07)' }} />
-      <div className="absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)' }} />
+      <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
     </div>
   );
 
@@ -203,7 +200,7 @@ export default function VotingPage({ character, onBack }) {
             ✏️ Change yer vote
           </button>
 
-          <button onClick={onBack} className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic">
+          <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic">
             ← Back to the ship
           </button>
         </div>
@@ -232,7 +229,7 @@ export default function VotingPage({ character, onBack }) {
         </div>
 
         {totalVotes !== null && (
-          <p className="text-amber-900/40 text-xs italic">
+          <p className="text-amber-400/60 text-xs italic">
             {totalVotes === 0
               ? "Be the first to cast yer vote!"
               : `${totalVotes} ${totalVotes === 1 ? 'pirate has' : 'pirates have'} already voted`
@@ -278,14 +275,14 @@ export default function VotingPage({ character, onBack }) {
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic text-center"
+              className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic text-center"
             >
               Cancel — keep me original vote
             </button>
           )}
         </form>
 
-        <button onClick={onBack} className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic">
+        <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic">
           ← Back to the ship
         </button>
       </div>

@@ -3,12 +3,9 @@ export default function HubPage({ character, onNavigate, onLogout }) {
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 -left-60 w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ background: 'rgba(120,60,10,0.06)' }} />
-        <div className="absolute bottom-1/4 -right-60 w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ background: 'rgba(100,20,20,0.06)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)' }} />
+        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-amber-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -right-40 w-[500px] h-[500px] bg-red-700/15 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-8 animate-fade-in">
@@ -58,7 +55,7 @@ export default function HubPage({ character, onNavigate, onLogout }) {
         {/* Sign out */}
         <button
           onClick={onLogout}
-          className="text-amber-900/40 text-xs hover:text-amber-700/60 transition-colors italic"
+          className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic"
         >
           ← Sign out
         </button>

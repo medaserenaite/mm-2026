@@ -6,7 +6,7 @@
   body {
     background-color: #080808;
     color: #eee2dc;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'IM Fell English', Georgia, serif;
     min-height: 100vh;
     margin: 0;
   }
@@ -18,7 +18,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-family: 'Cinzel', serif;
+    font-family: 'Pirata One', serif;
   }
 
   .card {
@@ -43,7 +43,7 @@
     border-radius: 0.75rem;
     color: #fef3c7;
     font-weight: 700;
-    font-family: 'Cinzel', serif;
+    font-family: 'Pirata One', serif;
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 0.2s;
@@ -73,7 +73,7 @@
     border-radius: 0.75rem;
     color: #d97706;
     font-weight: 600;
-    font-family: 'Cinzel', serif;
+    font-family: 'Pirata One', serif;
     letter-spacing: 0.04em;
     cursor: pointer;
     transition: all 0.2s;
