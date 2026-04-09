@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BINGO_PROMPTS, BINGO_UNLOCK_TIME } from '../data/characters.js';
+import { BINGO_PROMPTS } from '../data/characters.js';
 import { supabase } from '../lib/supabase.js';
+import { useUnlockTime, useCountdown, Pad } from '../lib/countdown.jsx';
 
 // ─── Seeded card generation ───────────────────────────────────────────────────
 
@@ -56,36 +57,6 @@ function getWinningCells(marks) {
   const d2 = [3,6,9,12];
   if (d2.every(i => marks[i])) d2.forEach(i => winning.add(i));
   return winning;
-}
-
-// ─── Countdown ───────────────────────────────────────────────────────────────
-
-function useCountdown(targetDate) {
-  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, targetDate - Date.now()));
-  useEffect(() => {
-    if (timeLeft <= 0) return;
-    const id = setInterval(() => setTimeLeft(Math.max(0, targetDate - Date.now())), 1000);
-    return () => clearInterval(id);
-  }, [targetDate, timeLeft]);
-  const s = Math.floor(timeLeft / 1000);
-  return {
-    timeLeft,
-    days:    Math.floor(s / 86400),
-    hours:   Math.floor((s % 86400) / 3600),
-    minutes: Math.floor((s % 3600) / 60),
-    seconds: s % 60,
-  };
-}
-
-function Pad({ value, label }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="card px-4 py-3 text-3xl font-black text-amber-300 font-mono min-w-[3.5rem] text-center">
-        {String(value).padStart(2, '0')}
-      </div>
-      <span className="text-amber-400/50 text-xs uppercase tracking-widest">{label}</span>
-    </div>
-  );
 }
 
 // ─── Modals ───────────────────────────────────────────────────────────────────
@@ -184,8 +155,9 @@ function SuccessModal({ character, timestamp, onViewLeaderboard, onClose }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BingoPage({ character, onBack, onComplete }) {
-  const { timeLeft, days, hours, minutes, seconds } = useCountdown(BINGO_UNLOCK_TIME);
-  const isUnlocked = timeLeft <= 0;
+  const { unlockTime } = useUnlockTime('bingo_unlock_time');
+  const { timeLeft, days, hours, minutes, seconds } = useCountdown(unlockTime);
+  const isUnlocked = unlockTime !== null && timeLeft <= 0;
 
   const storageKey = `bingo_${character}`;
 
@@ -285,30 +257,47 @@ export default function BingoPage({ character, onBack, onComplete }) {
           <div className="divider-rune mt-2 text-sm">⚓</div>
         </div>
 
-        {!isUnlocked ? (
-          // ── Locked state ──
+        {unlockTime === undefined ? (
+          // ── Loading ──
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="text-3xl animate-spin">⚓</div>
+            <p className="text-amber-400/60 text-xs italic">Checking the captain's orders…</p>
+          </div>
+        ) : !isUnlocked ? (
+          // ── Locked / countdown ──
           <div className="card p-8 w-full flex flex-col items-center gap-6">
             <div className="text-5xl">🔒</div>
-            <div className="text-center">
-              <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
-                The chest is sealed
-              </p>
-              <p className="text-amber-200/35 text-xs italic">
-                Unlocks April 18 at 6:00 PM Central
-              </p>
-            </div>
-            <div className="flex items-end gap-3">
-              <Pad value={days} label="Days" />
-              <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-              <Pad value={hours} label="Hours" />
-              <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-              <Pad value={minutes} label="Min" />
-              <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-              <Pad value={seconds} label="Sec" />
-            </div>
-            <p className="text-amber-400/40 text-xs italic text-center">
-              "Patience, sea dog. The tide turns when it turns."
-            </p>
+            {unlockTime === null ? (
+              <div className="text-center">
+                <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
+                  The chest is sealed
+                </p>
+                <p className="text-amber-200/35 text-xs italic">
+                  "The captain hasn't given the order yet. Stand by, sea dog."
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="text-center">
+                  <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
+                    The chest is sealed
+                  </p>
+                  <p className="text-amber-200/35 text-xs italic">Unlocks in…</p>
+                </div>
+                <div className="flex items-end gap-3">
+                  <Pad value={days} label="Days" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={hours} label="Hours" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={minutes} label="Min" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={seconds} label="Sec" />
+                </div>
+                <p className="text-amber-400/40 text-xs italic text-center">
+                  "Patience, sea dog. The tide turns when it turns."
+                </p>
+              </>
+            )}
           </div>
         ) : (
           // ── Unlocked bingo card ──

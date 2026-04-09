@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { CHARACTERS } from '../data/characters.js';
+import { useUnlockTime } from '../lib/countdown.jsx';
 
 const RANK = ['🥇', '🥈', '🥉'];
 const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name);
@@ -381,6 +382,130 @@ function VotesTab() {
   );
 }
 
+// ─── Timers Tab ───────────────────────────────────────────────────────────────
+
+function TimerCard({ settingKey, title, emoji, description }) {
+  const { unlockTime } = useUnlockTime(settingKey);
+  const [input, setInput] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Pre-fill input with current value when loaded
+  useEffect(() => {
+    if (unlockTime) {
+      // Convert to local datetime-local format
+      const local = new Date(unlockTime.getTime() - unlockTime.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+      setInput(local);
+    }
+  }, [unlockTime?.toISOString()]);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    if (!input) return;
+    setSaving(true);
+    const iso = new Date(input).toISOString();
+    await supabase.from('settings').upsert({ key: settingKey, value: iso }, { onConflict: 'key' });
+    setSaving(false);
+  }
+
+  async function handleClear() {
+    setSaving(true);
+    await supabase.from('settings').delete().eq('key', settingKey);
+    setInput('');
+    setSaving(false);
+  }
+
+  const isSet = unlockTime !== null && unlockTime !== undefined;
+  const isLoading = unlockTime === undefined;
+  const isPast = isSet && unlockTime <= new Date();
+
+  return (
+    <div className="card p-5 flex flex-col gap-4">
+      <div>
+        <p className="text-amber-200/60 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
+        <p className="text-amber-400/60 text-[10px] italic mt-0.5">{description}</p>
+      </div>
+
+      {/* Current status */}
+      <div className="rounded-xl px-4 py-3 flex items-center gap-3"
+        style={{
+          background: isLoading ? 'rgba(255,255,255,0.02)' :
+            !isSet ? 'rgba(220,38,38,0.06)' :
+            isPast ? 'rgba(34,197,94,0.06)' : 'rgba(251,191,36,0.06)',
+          border: isLoading ? '1px solid rgba(180,130,40,0.1)' :
+            !isSet ? '1px solid rgba(220,38,38,0.2)' :
+            isPast ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(251,191,36,0.2)',
+        }}>
+        <span className="text-xl flex-shrink-0">
+          {isLoading ? '⏳' : !isSet ? '🔒' : isPast ? '🔓' : '⏳'}
+        </span>
+        <div className="min-w-0">
+          <p className={`text-xs font-bold ${!isSet ? 'text-red-400/70' : isPast ? 'text-green-400/80' : 'text-amber-300/80'}`}>
+            {isLoading ? 'Loading…' : !isSet ? 'Locked — no time set' : isPast ? 'Unlocked' : 'Counting down'}
+          </p>
+          {isSet && (
+            <p className="text-amber-400/50 text-[10px] font-mono mt-0.5">
+              {unlockTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Set time form */}
+      <form onSubmit={handleSave} className="flex flex-col gap-2">
+        <input
+          type="datetime-local"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
+            text-amber-100 text-sm focus:outline-none focus:border-amber-600/50
+            focus:ring-2 focus:ring-amber-700/20 transition-all"
+        />
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={!input || saving}
+            className="btn-primary flex-1 py-3 text-sm"
+          >
+            {saving ? 'Saving…' : isSet ? 'Update Time ⚓' : 'Set Time ⚓'}
+          </button>
+          {isSet && (
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={saving}
+              className="rounded-xl px-4 py-3 text-sm font-bold border border-red-900/30
+                text-red-500/60 hover:text-red-400/80 hover:border-red-700/40 hover:bg-red-900/10 transition-all"
+            >
+              🔒 Lock
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function TimersTab() {
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      <TimerCard
+        settingKey="bingo_unlock_time"
+        title="Bingo Countdown"
+        emoji="🎲"
+        description="When set, players see a countdown. When time passes, the bingo card unlocks."
+      />
+      <TimerCard
+        settingKey="voting_unlock_time"
+        title="Voting Countdown"
+        emoji="📜"
+        description="When set, players see a countdown. When time passes, the voting form unlocks."
+      />
+    </div>
+  );
+}
+
 // ─── Main AdminPage ───────────────────────────────────────────────────────────
 
 export default function AdminPage({ onLogout }) {
@@ -413,9 +538,10 @@ export default function AdminPage({ onLogout }) {
         <div className="flex w-full rounded-xl overflow-hidden border border-amber-900/25"
           style={{ background: 'rgba(0,0,0,0.3)' }}>
           {[
-            { key: 'bingo', label: '🎲 Bingo' },
-            { key: 'votes', label: '📜 Votes' },
-          ].map(t => (
+            { key: 'bingo',  label: '🎲 Bingo' },
+            { key: 'votes',  label: '📜 Votes' },
+            { key: 'timers', label: '⏱ Timers' },
+          ].map((t, i, arr) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
@@ -423,7 +549,7 @@ export default function AdminPage({ onLogout }) {
               style={{
                 background: tab === t.key ? 'rgba(180,83,9,0.35)' : 'transparent',
                 color: tab === t.key ? '#fbbf24' : 'rgba(180,130,40,0.45)',
-                borderRight: t.key === 'bingo' ? '1px solid rgba(180,130,40,0.2)' : 'none',
+                borderRight: i < arr.length - 1 ? '1px solid rgba(180,130,40,0.2)' : 'none',
               }}
             >
               {t.label}
@@ -431,7 +557,7 @@ export default function AdminPage({ onLogout }) {
           ))}
         </div>
 
-        {tab === 'bingo' ? <BingoTab /> : <VotesTab />}
+        {tab === 'bingo' ? <BingoTab /> : tab === 'votes' ? <VotesTab /> : <TimersTab />}
 
         <button
           onClick={onLogout}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { CHARACTERS } from '../data/characters.js';
+import { useUnlockTime, useCountdown, Pad } from '../lib/countdown.jsx';
 
 const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name);
 
@@ -56,6 +57,10 @@ function SelectField({ value, onChange }) {
 }
 
 export default function VotingPage({ character, onBack }) {
+  const { unlockTime } = useUnlockTime('voting_unlock_time');
+  const { timeLeft, days, hours, minutes, seconds } = useCountdown(unlockTime);
+  const isUnlocked = unlockTime !== null && timeLeft <= 0;
+
   const [loading, setLoading] = useState(true);
   const [existing, setExisting] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -135,6 +140,76 @@ export default function VotingPage({ character, onBack }) {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
     </div>
   );
+
+  // ── Unlock time loading ──
+  if (unlockTime === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        {bg}
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="text-3xl animate-spin">⚓</div>
+          <p className="text-amber-400/60 text-xs italic">Checking the captain's orders…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Locked ──
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {bg}
+        <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-7 animate-fade-in">
+          <div className="flex items-center gap-3 text-3xl">
+            <span className="animate-flicker">🕯️</span>
+            <span className="text-4xl">📜</span>
+            <span className="animate-flicker" style={{ animationDelay: '0.9s' }}>🕯️</span>
+          </div>
+          <div className="text-center">
+            <h1 className="text-3xl font-black text-gradient">Cast Yer Vote</h1>
+            <div className="divider-rune mt-2 text-sm">⚓</div>
+          </div>
+          <div className="card p-8 w-full flex flex-col items-center gap-6">
+            <div className="text-5xl">🔒</div>
+            {unlockTime === null ? (
+              <div className="text-center">
+                <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
+                  The ballot is sealed
+                </p>
+                <p className="text-amber-200/35 text-xs italic">
+                  "The captain hasn't opened the polls yet. Stand by, sea dog."
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="text-center">
+                  <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
+                    The ballot is sealed
+                  </p>
+                  <p className="text-amber-200/35 text-xs italic">Voting opens in…</p>
+                </div>
+                <div className="flex items-end gap-3">
+                  <Pad value={days} label="Days" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={hours} label="Hours" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={minutes} label="Min" />
+                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
+                  <Pad value={seconds} label="Sec" />
+                </div>
+                <p className="text-amber-400/40 text-xs italic text-center">
+                  "Patience, sea dog. The tide turns when it turns."
+                </p>
+              </>
+            )}
+          </div>
+          <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-400/80 transition-colors italic">
+            ← Back to the ship
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
