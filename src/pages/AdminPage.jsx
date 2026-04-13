@@ -433,6 +433,13 @@ function TimerCard({ settingKey, title, emoji, description }) {
     setSaving(false);
   }
 
+  async function handleUnlockNow() {
+    setSaving(true);
+    const iso = new Date().toISOString();
+    await supabase.from('settings').upsert({ key: settingKey, value: iso }, { onConflict: 'key' });
+    setSaving(false);
+  }
+
   async function handleClear() {
     setSaving(true);
     await supabase.from('settings').delete().eq('key', settingKey);
@@ -506,6 +513,17 @@ function TimerCard({ settingKey, title, emoji, description }) {
             </button>
           )}
         </div>
+        {!isPast && (
+          <button
+            type="button"
+            onClick={handleUnlockNow}
+            disabled={saving}
+            className="w-full rounded-xl px-4 py-3 text-sm font-bold border border-green-800/40
+              text-green-400/70 hover:text-green-300/90 hover:border-green-600/50 hover:bg-green-900/10 transition-all"
+          >
+            ⚡ Unlock NOW
+          </button>
+        )}
       </form>
     </div>
   );

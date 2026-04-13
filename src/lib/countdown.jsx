@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase.js';
+import { TESTING } from '../config.js';
 
 // ─── Hook: fetch + watch an unlock time from the settings table ───────────────
+
+const PAST = new Date(0); // epoch — always counts as "already unlocked"
 
 export function useUnlockTime(key) {
   const [unlockTime, setUnlockTime] = useState(undefined); // undefined = loading
@@ -16,6 +19,7 @@ export function useUnlockTime(key) {
   }
 
   useEffect(() => {
+    if (TESTING) { setUnlockTime(PAST); return; }
     fetchTime();
     const channel = supabase
       .channel(`settings_${key}`)
