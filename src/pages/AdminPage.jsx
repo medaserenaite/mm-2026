@@ -252,6 +252,7 @@ function VotesTab() {
   const [votes, setVotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
+  const [deleteVoteTarget, setDeleteVoteTarget] = useState(null);
   const [showResetVotes, setShowResetVotes] = useState(false);
 
   async function fetchVotes() {
@@ -261,6 +262,11 @@ function VotesTab() {
       .order('submitted_at', { ascending: true });
     setVotes(data ?? []);
     setLoading(false);
+  }
+
+  async function handleDeleteVote(voterName) {
+    await supabase.from('votes').delete().eq('voter_name', voterName);
+    setDeleteVoteTarget(null);
   }
 
   async function handleResetVotes() {
@@ -326,19 +332,37 @@ function VotesTab() {
             <div key={v.voter_name}
               className="rounded-xl border border-amber-900/15 overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.02)' }}>
-              <button
-                onClick={() => setExpanded(expanded === idx ? null : idx)}
-                className="w-full flex items-center justify-between px-3 py-2.5 text-left"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-amber-400/60 text-[10px] font-mono flex-shrink-0">#{idx + 1}</span>
-                  <p className="text-amber-200/75 text-sm font-semibold truncate">{v.voter_name}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                  <p className="text-amber-400/60 text-[10px] font-mono">{formatTime(v.submitted_at)}</p>
-                  <span className="text-amber-400/60 text-xs">{expanded === idx ? '▲' : '▼'}</span>
-                </div>
-              </button>
+              <div className="flex items-center">
+                <button
+                  onClick={() => setExpanded(expanded === idx ? null : idx)}
+                  className="flex-1 flex items-center justify-between px-3 py-2.5 text-left min-w-0"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-amber-400/60 text-[10px] font-mono flex-shrink-0">#{idx + 1}</span>
+                    <p className="text-amber-200/75 text-sm font-semibold truncate">{v.voter_name}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <p className="text-amber-400/60 text-[10px] font-mono">{formatTime(v.submitted_at)}</p>
+                    <span className="text-amber-400/60 text-xs">{expanded === idx ? '▲' : '▼'}</span>
+                  </div>
+                </button>
+                {deleteVoteTarget === v.voter_name ? (
+                  <div className="flex gap-1 px-2 flex-shrink-0">
+                    <button onClick={() => handleDeleteVote(v.voter_name)}
+                      className="text-[10px] px-2 py-1 rounded bg-red-900/30 text-red-400/80 hover:bg-red-900/50 transition-all">
+                      Confirm
+                    </button>
+                    <button onClick={() => setDeleteVoteTarget(null)}
+                      className="text-[10px] px-2 py-1 rounded border border-amber-900/20 text-amber-400/60 hover:text-amber-700/60 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setDeleteVoteTarget(v.voter_name)}
+                    className="text-amber-900/25 hover:text-red-500/60 transition-colors text-sm px-3 flex-shrink-0"
+                    title="Remove vote">✕</button>
+                )}
+              </div>
               {expanded === idx && (
                 <div className="px-3 pb-3 border-t border-amber-900/10">
                   <p className="text-amber-200/60 text-sm font-semibold mt-2">
