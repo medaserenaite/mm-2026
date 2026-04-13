@@ -50,6 +50,24 @@ export default function HubPage({ character, onNavigate, onLogout }) {
             <span className="text-2xl">📜</span>
             <span>Cast Your Vote</span>
           </button>
+
+          <div className="divider-rune text-xs mt-1">☠</div>
+
+          <button
+            onClick={() => onNavigate('character')}
+            className="btn-secondary w-full text-base py-5 flex-col gap-1"
+          >
+            <span className="text-2xl">🪪</span>
+            <span>My Character</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('confession')}
+            className="btn-secondary w-full text-base py-5 flex-col gap-1"
+          >
+            <span className="text-2xl">🗡️</span>
+            <span>My Confession</span>
+          </button>
         </div>
 
         {/* Sign out */}
