@@ -9,6 +9,7 @@ import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import FramePage from './pages/FramePage.jsx';
 import CharacterPage from './pages/CharacterPage.jsx';
 import ConfessionPage from './pages/ConfessionPage.jsx';
+import RulesPage from './pages/RulesPage.jsx';
 
 export default function App() {
   const [character, setCharacter] = useState(() => sessionStorage.getItem('mm_character'));
@@ -64,6 +65,10 @@ export default function App() {
 
   if (page === 'confession') {
     return <ConfessionPage character={character} onBack={() => setPage('hub')} />;
+  }
+
+  if (page === 'rules') {
+    return <RulesPage onBack={() => setPage('hub')} />;
   }
 
   return <HubPage character={character} onNavigate={setPage} onLogout={handleLogout} />;
