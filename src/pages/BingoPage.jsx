@@ -28,6 +28,8 @@ function generateCard(characterName) {
   return seededShuffle(BINGO_PROMPTS, hashString(characterName)).slice(0, 16);
 }
 
+const ALL_CHARACTERS = BINGO_PROMPTS.map(p => p.character).sort();
+
 // ─── Bingo logic ──────────────────────────────────────────────────────────────
 
 function checkBingo(marks) {
@@ -152,6 +154,70 @@ function SuccessModal({ character, timestamp, onViewLeaderboard, onClose }) {
   );
 }
 
+function IdentifyModal({ item, onCorrect, onClose }) {
+  const [selected, setSelected] = useState('');
+  const [wrong, setWrong] = useState(false);
+
+  function handleSubmit() {
+    if (selected === item.character) {
+      onCorrect();
+    } else {
+      setWrong(true);
+      setSelected('');
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.88)' }}>
+      <div className="card p-7 w-full max-w-sm flex flex-col items-center gap-5 animate-fade-in">
+        <div className="text-4xl">🔍</div>
+        <div className="text-center">
+          <p className="text-amber-400/50 text-[10px] uppercase tracking-widest mb-1">Who fits this clue?</p>
+          <p className="text-amber-200/90 text-base font-bold leading-snug"
+            dangerouslySetInnerHTML={{ __html: item.prompt }} />
+        </div>
+
+        {wrong && (
+          <div className="w-full rounded-xl px-4 py-2.5 text-center"
+            style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.25)' }}>
+            <p className="text-red-400/80 text-xs font-bold">That's not the right scallywag! Try again.</p>
+          </div>
+        )}
+
+        <select
+          value={selected}
+          onChange={e => { setSelected(e.target.value); setWrong(false); }}
+          className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
+            text-amber-100 text-sm focus:outline-none focus:border-amber-600/50
+            focus:ring-2 focus:ring-amber-700/20 transition-all cursor-pointer"
+        >
+          <option value="" disabled className="bg-zinc-900 text-amber-900/50">— Select a character —</option>
+          {ALL_CHARACTERS.map(c => (
+            <option key={c} value={c} className="bg-zinc-900 text-amber-100">{c}</option>
+          ))}
+        </select>
+
+        <div className="flex flex-col gap-2 w-full">
+          <button
+            onClick={handleSubmit}
+            disabled={!selected}
+            className="btn-primary w-full py-3 text-sm"
+          >
+            Confirm ⚓
+          </button>
+          <button
+            onClick={onClose}
+            className="text-amber-400/60 text-xs hover:text-amber-400/80 transition-colors italic text-center"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BingoPage({ character, onBack, onComplete }) {
@@ -164,7 +230,8 @@ export default function BingoPage({ character, onBack, onComplete }) {
   const [card] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (saved?.card?.length === 16) return saved.card;
+      // Validate that saved card has objects (not old string format)
+      if (saved?.card?.length === 16 && typeof saved.card[0] === 'object') return saved.card;
     } catch {}
     return generateCard(character);
   });
@@ -188,6 +255,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingCell, setPendingCell] = useState(null); // index awaiting identification
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify({ card, marks, completedAt }));
@@ -195,8 +263,19 @@ export default function BingoPage({ character, onBack, onComplete }) {
 
   function handleCellClick(idx) {
     if (completedAt) return;
-    const next = marks.map((v, i) => i === idx ? !v : v);
+    if (marks[idx]) {
+      // Already marked — allow unmark directly
+      setMarks(prev => prev.map((v, i) => i === idx ? false : v));
+      return;
+    }
+    // Unmarked — require identification before marking
+    setPendingCell(idx);
+  }
+
+  function handleIdentifyCorrect() {
+    const next = marks.map((v, i) => i === pendingCell ? true : v);
     setMarks(next);
+    setPendingCell(null);
     if (checkBingo(next)) {
       setShowConfirm(true);
     }
@@ -329,7 +408,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
 
               {/* 4×4 grid */}
               <div className="grid grid-cols-4 gap-1.5">
-                {card.map((prompt, idx) => {
+                {card.map((item, idx) => {
                   const isMarked = marks[idx];
                   const isWinning = winningCells.has(idx);
                   return (
@@ -374,7 +453,7 @@ export default function BingoPage({ character, onBack, onComplete }) {
                             : 'text-amber-200/50'
                         }
                       `}
-                        dangerouslySetInnerHTML={{ __html: prompt }}
+                        dangerouslySetInnerHTML={{ __html: item.prompt }}
                       />
                     </button>
                   );
@@ -406,6 +485,13 @@ export default function BingoPage({ character, onBack, onComplete }) {
         </button>
       </div>
 
+      {pendingCell !== null && (
+        <IdentifyModal
+          item={card[pendingCell]}
+          onCorrect={handleIdentifyCorrect}
+          onClose={() => setPendingCell(null)}
+        />
+      )}
       {showConfirm && (
         <ConfirmModal
           onConfirm={handleConfirm}
