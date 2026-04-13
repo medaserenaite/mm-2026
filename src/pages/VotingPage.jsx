@@ -107,6 +107,7 @@ export default function VotingPage({ character, onBack }) {
     setSubmitting(true);
     setError(null);
 
+    const isFirstVote = !existing;
     const { error: err } = await supabase
       .from('votes')
       .upsert({
@@ -115,6 +116,7 @@ export default function VotingPage({ character, onBack }) {
         best_costume:   form.best_costume,
         best_performer: form.best_performer,
         most_likely:    form.most_likely,
+        ...(isFirstVote ? { submitted_at: new Date().toISOString() } : {}),
       }, { onConflict: 'voter_name' });
 
     if (err) {
