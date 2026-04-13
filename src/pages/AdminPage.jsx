@@ -508,7 +508,7 @@ function TimersTab() {
 
 // ─── Main AdminPage ───────────────────────────────────────────────────────────
 
-export default function AdminPage({ onLogout }) {
+export default function AdminPage({ onLogout, onNavigate }) {
   const [tab, setTab] = useState('bingo');
 
   return (
@@ -558,6 +558,13 @@ export default function AdminPage({ onLogout }) {
         </div>
 
         {tab === 'bingo' ? <BingoTab /> : tab === 'votes' ? <VotesTab /> : <TimersTab />}
+
+        <button
+          onClick={() => onNavigate('frame')}
+          className="btn-secondary w-full py-3 text-sm"
+        >
+          🖼 Display Frame
+        </button>
 
         <button
           onClick={onLogout}

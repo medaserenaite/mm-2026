@@ -19,8 +19,7 @@
 | GREGOR GREENBEARD | **6127** |
 | JUANA ZEECRU | **4053** |
 | PEARL DYVHER | **8741** |
-| BARB | **1369** |
-| BONES | **5628** |
+| BARB BONES | **1369** |
 | MAGPIE MEG | **9472** |
 | SALT PETER GRIMM | **3815** |
 | CALICO KATE | **7096** |

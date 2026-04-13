@@ -6,6 +6,7 @@ import BingoPage from './pages/BingoPage.jsx';
 import VotingPage from './pages/VotingPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
+import FramePage from './pages/FramePage.jsx';
 
 export default function App() {
   const [character, setCharacter] = useState(() => sessionStorage.getItem('mm_character'));
@@ -29,8 +30,12 @@ export default function App() {
     return <LoginPage onLogin={handleLogin} />;
   }
 
+  if (page === 'frame') {
+    return <FramePage onBack={() => setPage('hub')} />;
+  }
+
   if (isAdmin) {
-    return <AdminPage onLogout={handleLogout} />;
+    return <AdminPage onLogout={handleLogout} onNavigate={setPage} />;
   }
 
   if (page === 'bingo') {
