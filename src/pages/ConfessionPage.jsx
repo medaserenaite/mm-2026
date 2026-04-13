@@ -1,4 +1,4 @@
-import { CONFESSIONS } from '../data/confessions.js';
+import { CHARACTERS } from '../data/characters.js';
 
 // Parses text, rendering *...*  segments as italic + lighter
 function parseConfession(text) {
@@ -11,7 +11,7 @@ function parseConfession(text) {
 }
 
 export default function ConfessionPage({ character, onBack }) {
-  const confession = CONFESSIONS[character];
+  const confession = CHARACTERS.find(c => c.name === character)?.confession;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">

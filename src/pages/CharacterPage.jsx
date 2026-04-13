@@ -1,4 +1,4 @@
-import { CHARACTER_PROFILES } from '../data/characterProfiles.js';
+import { CHARACTERS } from '../data/characters.js';
 
 function Section({ label, emoji, children, highlight }) {
   return (
@@ -15,7 +15,7 @@ function Section({ label, emoji, children, highlight }) {
 }
 
 export default function CharacterPage({ character, onBack }) {
-  const profile = CHARACTER_PROFILES[character];
+  const profile = CHARACTERS.find(c => c.name === character);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
