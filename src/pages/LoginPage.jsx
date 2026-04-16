@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { CHARACTERS } from '../data/characters.js';
 
-const players = CHARACTERS.filter(c => !c.isAdmin);
+const players = CHARACTERS.filter(c => !c.isAdmin).sort((a, b) => a.name.split(' ')[0].localeCompare(b.name.split(' ')[0]));
 const admins  = CHARACTERS.filter(c => c.isAdmin);
 
 export default function LoginPage({ onLogin }) {
@@ -69,6 +69,7 @@ export default function LoginPage({ onLogin }) {
           <h1 className="text-[60px] font-black text-gradient leading-tight" style={{ fontFamily: 'Pirata One' }}>
             Pop DeKegg's Tavern
           </h1>
+          <p className="text-amber-400/50 text-sm italic mt-1">Ye Olde Buccaneer's Rest</p>
           <div className="divider-rune mt-2 text-sm">⚓</div>
           <p className="text-amber-200/40 text-sm mt-3 italic">
             "State thy name and secret seal to board the ship."

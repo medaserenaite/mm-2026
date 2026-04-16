@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CHARACTERS } from './data/characters.js';
 import LoginPage from './pages/LoginPage.jsx';
 import HubPage from './pages/HubPage.jsx';
@@ -17,6 +17,8 @@ export default function App() {
 
   const characterData = CHARACTERS.find(c => c.name === character);
   const isAdmin = characterData?.isAdmin === true;
+
+  useEffect(() => { window.scrollTo(0, 0); }, [page]);
 
   function handleLogin(name) {
     setCharacter(name);

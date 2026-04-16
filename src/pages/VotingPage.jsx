@@ -8,9 +8,9 @@ const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name);
 const CATEGORIES = [
   {
     key: 'villain_guess',
-    label: 'Best Detective',
-    pirateLabel: '🔍 Name the Scoundrel',
-    description: 'Who do ye reckon committed the foul deed?',
+    label: "Who's the Murderer?",
+    pirateLabel: '💀 Name the Murderer',
+    description: 'Who do ye reckon committed the foul deed and sent Pop to Davy Jones?',
     type: 'select',
   },
   {
@@ -29,9 +29,9 @@ const CATEGORIES = [
   },
   {
     key: 'most_likely',
-    label: 'Most Likely to Commit a Crime',
-    pirateLabel: '☠️ Most Likely to Walk the Plank',
-    description: 'Who among the crew seems the most suspicious — guilty or not?',
+    label: 'Most Suspicious (but innocent)',
+    pirateLabel: '🎭 Most Suspicious Scallywag',
+    description: 'Who played the most convincing red herring tonight — suspicious, but not the killer?',
     type: 'select',
   },
 ];

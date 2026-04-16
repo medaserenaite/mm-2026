@@ -312,15 +312,15 @@ function VotesTab() {
           <div className="border-t border-amber-900/15" />
           <TallySection title="Best Performer" pirateTitle="Best Actor Among Scallywags"     emoji="🎭" rows={performerTally}  total={total} />
           <div className="border-t border-amber-900/15" />
-          <TallySection title="Most Likely to Commit a Crime" pirateTitle="Most Likely to Walk the Plank" emoji="☠️" rows={mostLikelyTally} total={total} />
+          <TallySection title="Most Suspicious (but innocent)" pirateTitle="Most Suspicious Scallywag" emoji="🎭" rows={mostLikelyTally} total={total} />
         </div>
       )}
 
       {/* Best Detective — show all villain guesses */}
       <div className="card p-5 flex flex-col gap-3">
         <div>
-          <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">🔍 Best Detective</p>
-          <p className="text-amber-400/60 text-[10px] italic">All villain &amp; motive guesses — sorted by submission time</p>
+          <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">💀 Who's the Murderer?</p>
+          <p className="text-amber-400/60 text-[10px] italic">All murderer guesses — sorted by submission time</p>
         </div>
 
         {loading ? (
