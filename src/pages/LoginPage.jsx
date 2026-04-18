@@ -119,7 +119,7 @@ export default function LoginPage({ onLogin }) {
               </label>
               <input
                 ref={codeRef}
-                type="tel"
+                type="password"
                 inputMode="numeric"
                 placeholder="· · · ·"
                 value={code}
