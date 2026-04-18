@@ -270,7 +270,7 @@ export const BINGO_PROMPTS = [
   { prompt: "Ship's captain",                       character: "CAPTAIN 'LEFTY' LOOSEY", player: "Bryan"   },
   // { prompt: "Second-in-command",                    character: "FORREST MAIT",           player: "Elaine"  },
   { prompt: "Preaches against drinking rum",        character: "BO SUNN",                player: "Jonah"   },
-  { prompt: "Tells fortunes/reads tarot",           character: "TARA CARDS",             player: "Tessa"   },
+  { prompt: "Tells fortunes/<br/>reads tarot",           character: "TARA CARDS",             player: "Tessa"   },
   { prompt: "Works in a tavern",                    character: "BETTY SALTWATER",        player: "Emma M." },
   { prompt: "Missing an eye",                       character: "WINKY MCBLINKY",         player: "Ivo"     },
   { prompt: "Has anger management issues",          character: "ANGRUS ABER",            player: "David"   },

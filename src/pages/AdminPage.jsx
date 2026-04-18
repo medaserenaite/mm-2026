@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { CHARACTERS } from '../data/characters.js';
-import { useUnlockTime } from '../lib/countdown.jsx';
+import { useUnlocked } from '../lib/countdown.jsx';
 
 const RANK = ['🥇', '🥈', '🥉'];
 const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name);
@@ -46,11 +46,25 @@ function TallySection({ title, pirateTitle, emoji, rows, total }) {
     );
   }
   const max = rows[0].count;
+  const isTie = rows.filter(r => r.count === max).length > 1;
+  const winners = rows.filter(r => r.count === max);
   return (
     <div className="flex flex-col gap-2">
       <div>
         <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">{emoji} {title}</p>
         <p className="text-amber-400/60 text-[10px] italic">{pirateTitle}</p>
+      </div>
+      {/* Winner banner */}
+      <div className="rounded-xl px-4 py-3 flex items-center gap-3"
+        style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+        <span className="text-xl flex-shrink-0">{isTie ? '🤝' : '🏆'}</span>
+        <div className="min-w-0">
+          <p className="text-amber-400/50 text-[9px] uppercase tracking-widest">{isTie ? 'Current tie' : 'Current leader'}</p>
+          <p className="text-amber-300 font-black text-sm truncate">
+            {winners.map(w => w.name).join(' · ')}
+          </p>
+          <p className="text-amber-400/50 text-[10px]">{max} {max === 1 ? 'vote' : 'votes'} · {Math.round((max / total) * 100)}%</p>
+        </div>
       </div>
       {rows.map(({ name, count }, idx) => (
         <div key={name} className="flex items-center gap-2">
@@ -284,44 +298,41 @@ function VotesTab() {
   }, []);
 
   const total = votes.length;
-  const costumeTally   = tally(votes, 'best_costume');
-  const performerTally = tally(votes, 'best_performer');
+  const costumeTally    = tally(votes, 'best_costume');
+  const performerTally  = tally(votes, 'best_performer');
   const mostLikelyTally = tally(votes, 'most_likely');
+  const murdererTally   = tally(votes, 'villain_guess');
 
   return (
     <div className="flex flex-col gap-4 w-full">
 
-      {/* Vote count */}
-      <div className="card p-4 text-center">
-        {loading ? (
-          <div className="text-2xl animate-spin">⚓</div>
-        ) : (
-          <>
-            <p className="text-amber-300 font-black text-3xl">{total}</p>
-            <p className="text-amber-900/50 text-xs uppercase tracking-widest mt-1">
-              {total === 1 ? 'Pirate has voted' : 'Pirates have voted'}
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* Tallies */}
-      {!loading && total > 0 && (
-        <div className="card p-5 flex flex-col gap-6">
-          <TallySection title="Best Costume"   pirateTitle="Finest Plumage"                  emoji="🦜" rows={costumeTally}    total={total} />
-          <div className="border-t border-amber-900/15" />
-          <TallySection title="Best Performer" pirateTitle="Best Actor Among Scallywags"     emoji="🎭" rows={performerTally}  total={total} />
-          <div className="border-t border-amber-900/15" />
-          <TallySection title="Most Suspicious (but innocent)" pirateTitle="Most Suspicious Scallywag" emoji="🎭" rows={mostLikelyTally} total={total} />
-        </div>
-      )}
-
-      {/* Best Detective — show all villain guesses */}
+      {/* Murderer guesses */}
       <div className="card p-5 flex flex-col gap-3">
         <div>
           <p className="text-amber-200/50 text-xs font-bold uppercase tracking-widest">💀 Who's the Murderer?</p>
           <p className="text-amber-400/60 text-[10px] italic">All murderer guesses — sorted by submission time</p>
         </div>
+
+        {!loading && murdererTally.length > 0 && (() => {
+          const topCount = murdererTally[0].count;
+          const isTie = murdererTally.filter(r => r.count === topCount).length > 1;
+          const winners = murdererTally.filter(r => r.count === topCount);
+          return (
+            <div className="rounded-xl px-4 py-3 flex items-center gap-3"
+              style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+              <span className="text-xl flex-shrink-0">{isTie ? '🤝' : '🏆'}</span>
+              <div className="min-w-0">
+                <p className="text-amber-400/50 text-[9px] uppercase tracking-widest">{isTie ? 'Current tie' : 'Most accused'}</p>
+                <div className="flex flex-col">
+                  {winners.map(w => (
+                    <p key={w.name} className="text-amber-300 font-black text-sm">{w.name}</p>
+                  ))}
+                </div>
+                <p className="text-amber-400/50 text-[10px]">{topCount} {topCount === 1 ? 'vote' : 'votes'} · {Math.round((topCount / total) * 100)}%</p>
+              </div>
+            </div>
+          );
+        })()}
 
         {loading ? (
           <p className="text-amber-400/60 text-xs italic text-center py-2">Loading…</p>
@@ -375,6 +386,31 @@ function VotesTab() {
         )}
       </div>
 
+      {/* Vote count */}
+      <div className="card p-4 text-center">
+        {loading ? (
+          <div className="text-2xl animate-spin">⚓</div>
+        ) : (
+          <>
+            <p className="text-amber-300 font-black text-3xl">{total}</p>
+            <p className="text-amber-900/50 text-xs uppercase tracking-widest mt-1">
+              {total === 1 ? 'Pirate has voted' : 'Pirates have voted'}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Tallies */}
+      {!loading && total > 0 && (
+        <div className="card p-5 flex flex-col gap-6">
+          <TallySection title="Best Costume"   pirateTitle="Finest Plumage"                  emoji="🦜" rows={costumeTally}    total={total} />
+          <div className="border-t border-amber-900/15" />
+          <TallySection title="Best Performer" pirateTitle="Best Actor Among Scallywags"     emoji="🎭" rows={performerTally}  total={total} />
+          <div className="border-t border-amber-900/15" />
+          <TallySection title="Most Suspicious (but innocent)" pirateTitle="Most Suspicious Scallywag" emoji="🎭" rows={mostLikelyTally} total={total} />
+        </div>
+      )}
+
       {/* Reset votes */}
       <div className="card p-4 flex flex-col gap-3" style={{ borderColor: 'rgba(220,38,38,0.2)' }}>
         <p className="text-amber-200/35 text-[10px] uppercase tracking-widest text-center font-bold">⚠️ Danger Zone</p>
@@ -406,50 +442,25 @@ function VotesTab() {
   );
 }
 
-// ─── Timers Tab ───────────────────────────────────────────────────────────────
+// ─── Access Tab ───────────────────────────────────────────────────────────────
 
-function TimerCard({ settingKey, title, emoji, description }) {
-  const { unlockTime } = useUnlockTime(settingKey);
-  const [input, setInput] = useState('');
+function AccessCard({ settingKey, title, emoji, description }) {
+  const { unlocked, loading, refetch } = useUnlocked(settingKey);
   const [saving, setSaving] = useState(false);
 
-  // Pre-fill input with current value when loaded
-  useEffect(() => {
-    if (unlockTime) {
-      // Convert to local datetime-local format
-      const local = new Date(unlockTime.getTime() - unlockTime.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setInput(local);
-    }
-  }, [unlockTime?.toISOString()]);
-
-  async function handleSave(e) {
-    e.preventDefault();
-    if (!input) return;
+  async function handleUnlock() {
     setSaving(true);
-    const iso = new Date(input).toISOString();
-    await supabase.from('settings').upsert({ key: settingKey, value: iso }, { onConflict: 'key' });
+    await supabase.from('settings').upsert({ key: settingKey, value: 'true' }, { onConflict: 'key' });
+    await refetch();
     setSaving(false);
   }
 
-  async function handleUnlockNow() {
+  async function handleLock() {
     setSaving(true);
-    const iso = new Date().toISOString();
-    await supabase.from('settings').upsert({ key: settingKey, value: iso }, { onConflict: 'key' });
+    await supabase.from('settings').upsert({ key: settingKey, value: 'false' }, { onConflict: 'key' });
+    await refetch();
     setSaving(false);
   }
-
-  async function handleClear() {
-    setSaving(true);
-    await supabase.from('settings').delete().eq('key', settingKey);
-    setInput('');
-    setSaving(false);
-  }
-
-  const isSet = unlockTime !== null && unlockTime !== undefined;
-  const isLoading = unlockTime === undefined;
-  const isPast = isSet && unlockTime <= new Date();
 
   return (
     <div className="card p-5 flex flex-col gap-4">
@@ -458,91 +469,55 @@ function TimerCard({ settingKey, title, emoji, description }) {
         <p className="text-amber-400/60 text-[10px] italic mt-0.5">{description}</p>
       </div>
 
-      {/* Current status */}
+      {/* Status */}
       <div className="rounded-xl px-4 py-3 flex items-center gap-3"
         style={{
-          background: isLoading ? 'rgba(255,255,255,0.02)' :
-            !isSet ? 'rgba(220,38,38,0.06)' :
-            isPast ? 'rgba(34,197,94,0.06)' : 'rgba(251,191,36,0.06)',
-          border: isLoading ? '1px solid rgba(180,130,40,0.1)' :
-            !isSet ? '1px solid rgba(220,38,38,0.2)' :
-            isPast ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(251,191,36,0.2)',
+          background: loading ? 'rgba(255,255,255,0.02)' : unlocked ? 'rgba(34,197,94,0.06)' : 'rgba(220,38,38,0.06)',
+          border: loading ? '1px solid rgba(180,130,40,0.1)' : unlocked ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(220,38,38,0.2)',
         }}>
-        <span className="text-xl flex-shrink-0">
-          {isLoading ? '⏳' : !isSet ? '🔒' : isPast ? '🔓' : '⏳'}
-        </span>
-        <div className="min-w-0">
-          <p className={`text-xs font-bold ${!isSet ? 'text-red-400/70' : isPast ? 'text-green-400/80' : 'text-amber-300/80'}`}>
-            {isLoading ? 'Loading…' : !isSet ? 'Locked — no time set' : isPast ? 'Unlocked' : 'Counting down'}
-          </p>
-          {isSet && (
-            <p className="text-amber-400/50 text-[10px] font-mono mt-0.5">
-              {unlockTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
-            </p>
-          )}
-        </div>
+        <span className="text-xl flex-shrink-0">{loading ? '⏳' : unlocked ? '🔓' : '🔒'}</span>
+        <p className={`text-xs font-bold ${loading ? 'text-amber-400/60' : unlocked ? 'text-green-400/80' : 'text-red-400/70'}`}>
+          {loading ? 'Loading…' : unlocked ? 'Unlocked — players can access this' : 'Locked — players cannot access this'}
+        </p>
       </div>
 
-      {/* Set time form */}
-      <form onSubmit={handleSave} className="flex flex-col gap-2">
-        <input
-          type="datetime-local"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          className="w-full rounded-xl px-4 py-3 bg-black/30 border border-amber-900/30
-            text-amber-100 text-sm focus:outline-none focus:border-amber-600/50
-            focus:ring-2 focus:ring-amber-700/20 transition-all"
-        />
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={!input || saving}
-            className="btn-primary flex-1 py-3 text-sm"
-          >
-            {saving ? 'Saving…' : isSet ? 'Update Time ⚓' : 'Set Time ⚓'}
-          </button>
-          {isSet && (
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={saving}
-              className="rounded-xl px-4 py-3 text-sm font-bold border border-red-900/30
-                text-red-500/60 hover:text-red-400/80 hover:border-red-700/40 hover:bg-red-900/10 transition-all"
-            >
-              🔒 Lock
-            </button>
-          )}
-        </div>
-        {!isPast && (
-          <button
-            type="button"
-            onClick={handleUnlockNow}
-            disabled={saving}
-            className="w-full rounded-xl px-4 py-3 text-sm font-bold border border-green-800/40
-              text-green-400/70 hover:text-green-300/90 hover:border-green-600/50 hover:bg-green-900/10 transition-all"
-          >
-            ⚡ Unlock NOW
-          </button>
-        )}
-      </form>
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleUnlock}
+          disabled={saving || loading || unlocked}
+          className="btn-primary flex-1 py-3 text-sm"
+        >
+          🔓 Unlock
+        </button>
+        <button
+          onClick={handleLock}
+          disabled={saving || loading || !unlocked}
+          className="rounded-xl px-4 py-3 text-sm font-bold border border-red-900/30
+            text-red-500/60 hover:text-red-400/80 hover:border-red-700/40 hover:bg-red-900/10
+            transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-1"
+        >
+          🔒 Lock
+        </button>
+      </div>
     </div>
   );
 }
 
-function TimersTab() {
+function AccessTab() {
   return (
     <div className="flex flex-col gap-4 w-full">
-      <TimerCard
-        settingKey="bingo_unlock_time"
-        title="Bingo Countdown"
+      <AccessCard
+        settingKey="bingo_unlocked"
+        title="Bingo Game"
         emoji="🎲"
-        description="When set, players see a countdown. When time passes, the bingo card unlocks."
+        description="Controls whether players can access the bingo card."
       />
-      <TimerCard
-        settingKey="voting_unlock_time"
-        title="Voting Countdown"
+      <AccessCard
+        settingKey="voting_unlocked"
+        title="Voting"
         emoji="📜"
-        description="When set, players see a countdown. When time passes, the voting form unlocks."
+        description="Controls whether players can access the voting form."
       />
     </div>
   );
@@ -582,7 +557,7 @@ export default function AdminPage({ onLogout, onNavigate }) {
           {[
             { key: 'bingo',  label: '🎲 Bingo' },
             { key: 'votes',  label: '📜 Votes' },
-            { key: 'timers', label: '⏱ Timers' },
+            { key: 'access', label: '🔓 Access' },
           ].map((t, i, arr) => (
             <button
               key={t.key}
@@ -599,7 +574,7 @@ export default function AdminPage({ onLogout, onNavigate }) {
           ))}
         </div>
 
-        {tab === 'bingo' ? <BingoTab /> : tab === 'votes' ? <VotesTab /> : <TimersTab />}
+        {tab === 'bingo' ? <BingoTab /> : tab === 'votes' ? <VotesTab /> : <AccessTab />}
 
         <button
           onClick={() => onNavigate('frame')}

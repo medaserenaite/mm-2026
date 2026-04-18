@@ -2,35 +2,33 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabase.js';
 import { TESTING } from '../config.js';
 
-// ─── Hook: fetch + watch an unlock time from the settings table ───────────────
+// ─── Hook: simple boolean unlock state from the settings table ───────────────
 
-const PAST = new Date(0); // epoch — always counts as "already unlocked"
+export function useUnlocked(key) {
+  const [unlocked, setUnlocked] = useState(undefined); // undefined = loading
 
-export function useUnlockTime(key) {
-  const [unlockTime, setUnlockTime] = useState(undefined); // undefined = loading
-
-  async function fetchTime() {
+  async function fetchStatus() {
     const { data } = await supabase
       .from('settings')
       .select('value')
       .eq('key', key)
       .maybeSingle();
-    setUnlockTime(data?.value ? new Date(data.value) : null);
+    setUnlocked(data?.value === 'true');
   }
 
   useEffect(() => {
-    if (TESTING) { setUnlockTime(PAST); return; }
-    fetchTime();
+    if (TESTING) { setUnlocked(true); return; }
+    fetchStatus();
     const channel = supabase
       .channel(`settings_${key}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'settings', filter: `key=eq.${key}`,
-      }, fetchTime)
+      }, fetchStatus)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [key]);
 
-  return { unlockTime, loading: unlockTime === undefined };
+  return { unlocked, loading: unlocked === undefined, refetch: fetchStatus };
 }
 
 // ─── Hook: countdown to a target date ────────────────────────────────────────

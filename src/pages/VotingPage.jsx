@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { CHARACTERS } from '../data/characters.js';
-import { useUnlockTime, useCountdown, Pad } from '../lib/countdown.jsx';
+import { useUnlocked } from '../lib/countdown.jsx';
 
 const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name).sort((a, b) => a.localeCompare(b));
 
@@ -56,16 +56,41 @@ function SelectField({ value, onChange }) {
   );
 }
 
+function VoteSuccessModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.9)' }}>
+      <div className="card p-8 w-full max-w-sm flex flex-col items-center gap-5 animate-fade-in text-center">
+        <div className="flex gap-2 text-4xl">
+          <span>🎉</span><span>📜</span><span>🎉</span>
+        </div>
+        <div>
+          <h2 className="text-3xl font-black text-gradient mb-1">Vote Cast!</h2>
+          <div className="divider-rune mt-2 text-sm w-full">⚓</div>
+        </div>
+        <p className="text-amber-300 font-black text-lg">
+          Yer vote be cast, sea dog!
+        </p>
+        <p className="text-amber-200/60 text-sm italic leading-relaxed">
+          "Yer voice has been heard across the seven seas. The fates shall decide who walks the plank."
+        </p>
+        <button onClick={onClose} className="btn-primary w-full py-4 text-base mt-1">
+          See my selections ⚓
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function VotingPage({ character, onBack }) {
-  const { unlockTime } = useUnlockTime('voting_unlock_time');
-  const { timeLeft, days, hours, minutes, seconds } = useCountdown(unlockTime);
-  const isUnlocked = unlockTime !== null && timeLeft <= 0;
+  const { unlocked, loading: unlockLoading } = useUnlocked('voting_unlocked');
 
   const [loading, setLoading] = useState(true);
   const [existing, setExisting] = useState(null);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [, setSubmitted] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState(null);
   const [totalVotes, setTotalVotes] = useState(null);
 
@@ -128,8 +153,10 @@ export default function VotingPage({ character, onBack }) {
     setExisting({ ...form, voter_name: character });
     setEditing(false);
     setSubmitted(true);
+    setShowSuccessModal(true);
     setTotalVotes(v => existing ? v : (v ?? 0) + 1);
     setSubmitting(false);
+    window.scrollTo(0, 0);
   }
 
   const canSubmit = form.villain_guess.trim() && form.best_costume && form.best_performer && form.most_likely;
@@ -143,8 +170,8 @@ export default function VotingPage({ character, onBack }) {
     </div>
   );
 
-  // ── Unlock time loading ──
-  if (unlockTime === undefined) {
+  // ── Loading ──
+  if (unlockLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
         {bg}
@@ -157,7 +184,7 @@ export default function VotingPage({ character, onBack }) {
   }
 
   // ── Locked ──
-  if (!isUnlocked) {
+  if (!unlocked) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
         {bg}
@@ -171,41 +198,16 @@ export default function VotingPage({ character, onBack }) {
             <h1 className="text-3xl font-black text-gradient">Cast Yer Vote</h1>
             <div className="divider-rune mt-2 text-sm">⚓</div>
           </div>
-          <div className="card p-8 w-full flex flex-col items-center gap-6">
+          <div className="card p-8 w-full flex flex-col items-center gap-4 text-center">
             <div className="text-5xl">🔒</div>
-            {unlockTime === null ? (
-              <div className="text-center">
-                <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
-                  The ballot is sealed
-                </p>
-                <p className="text-amber-200/35 text-xs italic">
-                  "The captain hasn't opened the polls yet. Stand by, sea dog."
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="text-center">
-                  <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
-                    The ballot is sealed
-                  </p>
-                  <p className="text-amber-200/35 text-xs italic">Voting opens in…</p>
-                </div>
-                <div className="flex items-end gap-3">
-                  <Pad value={days} label="Days" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={hours} label="Hours" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={minutes} label="Min" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={seconds} label="Sec" />
-                </div>
-                <p className="text-amber-400/40 text-xs italic text-center">
-                  "Patience, sea dog. The tide turns when it turns."
-                </p>
-              </>
-            )}
+            <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest">
+              The ballot is sealed
+            </p>
+            <p className="text-amber-200/35 text-xs italic">
+              "The captain hasn't opened the polls yet. Stand by, sea dog."
+            </p>
           </div>
-          <button onClick={onBack} className="btn-secondary w-full py-3 text-sm">
+          <button onClick={onBack} className="btn-secondary w-full py-2.5 text-sm">
             ← Back to the ship
           </button>
         </div>
@@ -247,16 +249,11 @@ export default function VotingPage({ character, onBack }) {
             <div className="divider-rune mt-2 text-sm">⚓</div>
           </div>
 
-          {/* Success banner */}
-          <div className="card p-5 w-full flex flex-col items-center gap-2 text-center"
-            style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.06)' }}>
-            <div className="text-3xl">{submitted ? '🎉' : '✅'}</div>
-            <p className="text-amber-300 font-black text-base">
-              {submitted ? "Yer vote be cast, sea dog!" : "Ye've already voted!"}
-            </p>
-            <p className="text-amber-200/45 text-xs italic">
-              "Yer voice has been heard across the seven seas."
-            </p>
+          {/* Vote summary header */}
+          <div className="card p-4 w-full flex flex-col items-center gap-1 text-center"
+            style={{ borderColor: 'rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.04)' }}>
+            <div className="text-2xl">✅</div>
+            <p className="text-amber-300 font-black text-base">Ye've already voted!</p>
           </div>
 
           {/* Vote summary */}
@@ -266,7 +263,7 @@ export default function VotingPage({ character, onBack }) {
             </p>
             {CATEGORIES.map(cat => (
               <div key={cat.key} className="flex flex-col gap-0.5">
-                <p className="text-amber-900/50 text-[10px] uppercase tracking-widest">{cat.label}</p>
+                <p className="text-[10px] uppercase tracking-widest" style={{ color: '#ffd8c280' }}>{cat.label}</p>
                 <p className="text-amber-200/75 text-sm italic">
                   {existing[cat.key]}
                 </p>
@@ -281,10 +278,11 @@ export default function VotingPage({ character, onBack }) {
             ✏️ Change yer vote
           </button>
 
-          <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic">
+          <button onClick={onBack} className="btn-secondary w-full max-w-md mx-auto block py-2.5 text-sm">
             ← Back to the ship
           </button>
         </div>
+        {showSuccessModal && <VoteSuccessModal onClose={() => setShowSuccessModal(false)} />}
       </div>
     );
   }

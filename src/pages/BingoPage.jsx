@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BINGO_PROMPTS } from '../data/characters.js';
 import { supabase } from '../lib/supabase.js';
-import { useUnlockTime, useCountdown, Pad } from '../lib/countdown.jsx';
+import { useUnlocked } from '../lib/countdown.jsx';
 
 // ─── Seeded card generation ───────────────────────────────────────────────────
 
@@ -221,9 +221,7 @@ function IdentifyModal({ item, onCorrect, onClose }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BingoPage({ character, onBack, onComplete }) {
-  const { unlockTime } = useUnlockTime('bingo_unlock_time');
-  const { timeLeft, days, hours, minutes, seconds } = useCountdown(unlockTime);
-  const isUnlocked = unlockTime !== null && timeLeft <= 0;
+  const { unlocked, loading: unlockLoading } = useUnlocked('bingo_unlocked');
 
   const storageKey = `bingo_${character}`;
 
@@ -341,47 +339,22 @@ export default function BingoPage({ character, onBack, onComplete }) {
           <div className="divider-rune mt-2 text-sm">⚓</div>
         </div>
 
-        {unlockTime === undefined ? (
+        {unlockLoading ? (
           // ── Loading ──
           <div className="flex flex-col items-center gap-3 py-8">
             <div className="text-3xl animate-spin">⚓</div>
             <p className="text-amber-400/60 text-xs italic">Checking the captain's orders…</p>
           </div>
-        ) : !isUnlocked ? (
-          // ── Locked / countdown ──
-          <div className="card p-8 w-full flex flex-col items-center gap-6">
+        ) : !unlocked ? (
+          // ── Locked ──
+          <div className="card p-8 w-full flex flex-col items-center gap-4 text-center">
             <div className="text-5xl">🔒</div>
-            {unlockTime === null ? (
-              <div className="text-center">
-                <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
-                  The chest is sealed
-                </p>
-                <p className="text-amber-200/35 text-xs italic">
-                  "The captain hasn't given the order yet. Stand by, sea dog."
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="text-center">
-                  <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest mb-1">
-                    The chest is sealed
-                  </p>
-                  <p className="text-amber-200/35 text-xs italic">Unlocks in…</p>
-                </div>
-                <div className="flex items-end gap-3">
-                  <Pad value={days} label="Days" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={hours} label="Hours" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={minutes} label="Min" />
-                  <span className="text-amber-400/60 text-2xl font-bold pb-5">:</span>
-                  <Pad value={seconds} label="Sec" />
-                </div>
-                <p className="text-amber-400/40 text-xs italic text-center">
-                  "Patience, sea dog. The tide turns when it turns."
-                </p>
-              </>
-            )}
+            <p className="text-amber-200/60 text-sm font-semibold uppercase tracking-widest">
+              The chest is sealed
+            </p>
+            <p className="text-amber-200/35 text-xs italic">
+              "The captain hasn't given the order yet. Stand by, sea dog."
+            </p>
           </div>
         ) : (
           // ── Unlocked bingo card ──
