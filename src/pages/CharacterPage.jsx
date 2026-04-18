@@ -26,7 +26,12 @@ export default function CharacterPage({ character, onBack }) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,0,0,0.7)_100%)]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-5 animate-fade-in pt-6">
+      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-3 pb-2"
+        style={{ background: 'rgba(8,8,8,0.88)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(180,130,40,0.15)' }}>
+        <button onClick={onBack} className="btn-secondary w-full max-w-md mx-auto block py-2.5 text-sm">← Back to the ship</button>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-5 animate-fade-in pt-20">
 
         <div className="flex items-center gap-3 text-3xl">
           <span className="animate-flicker">🕯️</span>
@@ -77,7 +82,7 @@ export default function CharacterPage({ character, onBack }) {
 
         <button
           onClick={onBack}
-          className="text-amber-400/60 text-xs hover:text-amber-400/80 transition-colors italic"
+          className="btn-secondary w-full py-2.5 text-sm"
         >
           ← Back to the ship
         </button>

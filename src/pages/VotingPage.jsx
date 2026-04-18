@@ -205,7 +205,7 @@ export default function VotingPage({ character, onBack }) {
               </>
             )}
           </div>
-          <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-400/80 transition-colors italic">
+          <button onClick={onBack} className="btn-secondary w-full py-3 text-sm">
             ← Back to the ship
           </button>
         </div>
@@ -230,7 +230,11 @@ export default function VotingPage({ character, onBack }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
         {bg}
-        <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-6">
+        <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-3 pb-2"
+          style={{ background: 'rgba(8,8,8,0.88)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(180,130,40,0.15)' }}>
+          <button onClick={onBack} className="btn-secondary w-full max-w-md mx-auto block py-2.5 text-sm">← Back to the ship</button>
+        </div>
+        <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-20">
 
           <div className="flex items-center gap-3 text-3xl">
             <span className="animate-flicker">🕯️</span>
@@ -272,7 +276,7 @@ export default function VotingPage({ character, onBack }) {
 
           <button
             onClick={() => setEditing(true)}
-            className="btn-secondary w-full py-3 text-sm"
+            className="btn-secondary w-full py-2.5 text-sm"
           >
             ✏️ Change yer vote
           </button>
@@ -289,7 +293,11 @@ export default function VotingPage({ character, onBack }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-4 pb-12 relative overflow-hidden">
       {bg}
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-6">
+      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-3 pb-2"
+        style={{ background: 'rgba(8,8,8,0.88)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(180,130,40,0.15)' }}>
+        <button onClick={onBack} className="btn-secondary w-full max-w-md mx-auto block py-2.5 text-sm">← Back to the ship</button>
+      </div>
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6 animate-fade-in pt-20">
 
         <div className="flex items-center gap-3 text-3xl">
           <span className="animate-flicker">🕯️</span>
