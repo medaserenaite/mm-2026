@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { CHARACTERS } from '../data/characters.js';
 import { useUnlockTime, useCountdown, Pad } from '../lib/countdown.jsx';
 
-const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name);
+const playerNames = CHARACTERS.filter(c => !c.isAdmin).map(c => c.name).sort((a, b) => a.localeCompare(b));
 
 const CATEGORIES = [
   {
@@ -367,7 +367,7 @@ export default function VotingPage({ character, onBack }) {
           )}
         </form>
 
-        <button onClick={onBack} className="text-amber-400/60 text-xs hover:text-amber-700/60 transition-colors italic">
+        <button onClick={onBack} className="btn-secondary w-full max-w-md mx-auto block py-2.5 text-sm">
           ← Back to the ship
         </button>
       </div>
