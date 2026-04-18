@@ -25,7 +25,8 @@ function seededShuffle(arr, seed) {
 }
 
 function generateCard(characterName) {
-  return seededShuffle(BINGO_PROMPTS, hashString(characterName)).slice(0, 16);
+  const eligible = BINGO_PROMPTS.filter(p => p.character !== characterName);
+  return seededShuffle(eligible, hashString(characterName)).slice(0, 16);
 }
 
 const ALL_CHARACTERS = BINGO_PROMPTS.map(p => p.character).sort();
@@ -228,8 +229,12 @@ export default function BingoPage({ character, onBack, onComplete }) {
   const [card] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
-      // Validate that saved card has objects (not old string format)
-      if (saved?.card?.length === 16 && typeof saved.card[0] === 'object') return saved.card;
+      // Validate: must be objects, and must not contain the player's own character
+      if (
+        saved?.card?.length === 16 &&
+        typeof saved.card[0] === 'object' &&
+        !saved.card.some(item => item.character === character)
+      ) return saved.card;
     } catch {}
     return generateCard(character);
   });
